@@ -11,15 +11,18 @@ namespace Markdown
 
 		public Md()
 		{
-			_blockParser = new BlockParser(new InlineParser());
+			// список символов для экранирования
+			var escapableChars = new HashSet<char>() { '_', '#', '-' };
+
+			_blockParser = new BlockParser(new AbzatsParser(new InlineParser()));
 			_renderer = new Rendering.HTMLRenderer();
-			_ecaper = new Escaper();
+			_ecaper = new Escaper(escapableChars);
 		}
 
 		// Преобразование текста в HTML по спецификации
 		public string Render(string text)
 		{
-			// TODO: реализовать pipeline: экранирование, разбиение на абзацы, inline-разбор, рендер.
+			// pipeline: экранирование, разбиение на абзацы, inline-разбор, рендер.
 			if (string.IsNullOrEmpty(text))
 			{
 				return string.Empty;

@@ -17,25 +17,22 @@ namespace Markdown.Parsing
 			emEnd = -1;
 			emLen = 1;
 
-			if (pos + 1 >= end) return false;
-			if (context.Text[pos] != '_') return false;
-			if (context.IsMasked(pos)) return false;
-			if (pos + 1 < end && context.Text[pos + 1] == '_' && !context.IsMasked(pos + 1)) return false;
-			if (pos > 0 && context.Text[pos - 1] == '_' && !context.IsMasked(pos - 1)) return false;
+			if (!IsStartWithCorrectChar(context, pos, end)) return false;
+			if (IsPartOfDoubleUnderscore(context, pos, end)) return false;
 			if (char.IsWhiteSpace(context.Text[pos + 1])) return false;
 
-			bool openInsideWord = pos > 0 && char.IsLetterOrDigit(context.Text[pos - 1]);
-			int i = pos + 1;
-			int doubleUnderscoresCount = 0;
+			var openInsideWord = IsInsideWord(context, pos);
+			var i = pos + 1;
+			var doubleUnderscoresCount = 0;
 			while (i < end)
 			{
 				if (openInsideWord && char.IsWhiteSpace(context.Text[i])) return false;
 
-				if (context.Text[i] == '_' && !context.IsMasked(i))
+				if (IsUnmaskedUnderscore(context, i))
 				{
 					// Проверяем, не является ли это подчеркивание частью двойного __
-					bool prevIsUnderscore = i - 1 >= pos && context.Text[i - 1] == '_' && !context.IsMasked(i - 1);
-					bool nextIsUnderscore = i + 1 < end && context.Text[i + 1] == '_' && !context.IsMasked(i + 1);
+					var prevIsUnderscore = i - 1 >= pos && IsUnmaskedUnderscore(context, i - 1);
+					var nextIsUnderscore = i + 1 < end && IsUnmaskedUnderscore(context, i + 1);
 
 					// Если это часть двойного __, и при этом это не трёшка
 					if (prevIsUnderscore || nextIsUnderscore)
@@ -53,11 +50,10 @@ namespace Markdown.Parsing
 					}
 
 					// Проверяем, что перед закрывающей не пробел
-					if (i > pos + 1 && !char.IsWhiteSpace(context.Text[i - 1]))
+					if (IsValidClosingCandidate(context, i, pos))
 					{
-						bool innerLeftDigit = char.IsDigit(context.Text[pos + 1]);
-						bool innerRightDigit = char.IsDigit(context.Text[i - 1]);
-						if (innerLeftDigit && innerRightDigit) return false;
+						if (IsBoundaryDigits(context, pos, i)) return false;
+
 						// Если doubleUnderscoresCount нечётный, значит внути em
 						// есть __ без пары, тогда появляется пересечение.
 						if (doubleUnderscoresCount % 2 != 0) return false;
@@ -69,6 +65,42 @@ namespace Markdown.Parsing
 				i++;
 			}
 			return false;
+		}
+
+		private bool IsStartWithCorrectChar(RuleContext context, int pos, int end)
+		{
+			return pos + 1 < end &&
+				   context.Text[pos] == '_' &&
+				   !context.IsMasked(pos);
+		}
+
+		private bool IsPartOfDoubleUnderscore(RuleContext context, int pos, int end)
+		{
+			var prevIsUnderscore = pos > 0 && context.Text[pos - 1] == '_' && !context.IsMasked(pos - 1);
+			var nextIsUnderscore = pos + 1 < end && context.Text[pos + 1] == '_' && !context.IsMasked(pos + 1);
+			return prevIsUnderscore || nextIsUnderscore;
+		}
+
+		private bool IsInsideWord(RuleContext context, int pos)
+		{
+			return pos > 0 && char.IsLetterOrDigit(context.Text[pos - 1]);
+		}
+
+		private bool IsUnmaskedUnderscore(RuleContext context, int index)
+		{
+			return context.Text[index] == '_' && !context.IsMasked(index);
+		}
+
+		private bool IsValidClosingCandidate(RuleContext context, int i, int pos)
+		{
+			return i > pos + 1 && !char.IsWhiteSpace(context.Text[i - 1]);
+		}
+
+		private bool IsBoundaryDigits(RuleContext context, int pos, int i)
+		{
+			var innerLeftDigit = char.IsDigit(context.Text[pos + 1]);
+			var innerRightDigit = char.IsDigit(context.Text[i - 1]);
+			return innerLeftDigit && innerRightDigit;
 		}
 	}
 }

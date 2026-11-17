@@ -1,6 +1,5 @@
 ﻿using Markdown.Models;
 using System.Text;
-using System.Text.Encodings.Web;
 
 namespace Markdown.Rendering
 {

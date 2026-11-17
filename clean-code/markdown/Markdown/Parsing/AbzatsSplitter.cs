@@ -2,61 +2,56 @@
 {
 	public class AbzatsSplitter
 	{
+		private const char LineFeed = '\n';
+		private const char Space = ' ';
+		private const char Tab = '\t';
+
 		// Делит исходный текст на абзацы. Абзац — единица обработки правил
 		// Два и более \n это новый абзац, один - просто новая строка
 		public IReadOnlyList<string> Split(string text)
 		{
+			// Привязка к Environment.NewLine может сделать код специализированным для Windows
+			// Нормализация позволит обрабатывать строки не зависимо от ОС
+			var normalizedText = text.Replace("\r\n", "\n").Replace("\r", "\n");
 			var result = new List<string>();
-			int start = 0;
-			int i = 0;
+			var start = 0;
+			var i = 0;
 
-			while (i < text.Length)
+			while (i < normalizedText.Length)
 			{
-				if (text[i] != '\n')
+				if (normalizedText[i] == LineFeed)
 				{
-					i++;
-					continue;
-				}
-				// Ищем второй перенос учитывая, что они могут быть разделены
-				int j = i + 1;
-				while (j < text.Length && (text[j] == ' ' || text[j] == '\r' || text[j] == '\t'))
-				{
-					j++;
-				}
-				if (j < text.Length && text[j] == '\n')
-				{
-					AddIfNonEmpty(result, text, start, i);
-					// Пропускаем всю серию пустых строк (могут быть \n \n \n ...).
-					while (j < text.Length)
+					var j = i + 1;
+					// Пропускаем горизонтальные пробелы
+					while (j < normalizedText.Length && IsHorizontalWhitespace(normalizedText[j]))
 					{
-						if (text[j] == '\n')
-						{
-							j++;
-							// после '\n' тоже могут быть пробелы до следующего '\n'
-							while (j < text.Length && (text[j] == ' ' || text[j] == '\t' || text[j] == '\r'))
-							{
-								j++;
-							}
-						}
-						else if (text[j] == ' ' || text[j] == '\t' || text[j] == '\r')
-						{
-							j++;
-						}
-						else
-						{
-							break;
-						}
+						j++;
 					}
-
-					start = j;
-					i = j;
-					continue;
+					if (j < normalizedText.Length && normalizedText[j] == LineFeed)
+					{
+						// Следующий абзац сразу после второго \n
+						// Остальные \n останутся в начале следующего абзаца
+						AddIfNonEmpty(result, normalizedText, start, i);
+						start = j + 1;
+						i = start;
+						continue;
+					}
+					else
+					{
+						// Одиночный \n, не граница
+						i = j;
+						continue;
+					}
 				}
-				// Если был найден только один перенос, то это не граница, идём дальше.
 				i++;
 			}
-			AddIfNonEmpty(result, text, start, text.Length);
+			AddIfNonEmpty(result, normalizedText, start, normalizedText.Length);
 			return result;
+		}
+
+		private static bool IsHorizontalWhitespace(char ch)
+		{
+			return ch == Space || ch == Tab;
 		}
 			
 		private void AddIfNonEmpty(List<string> result, string text, int start, int end)

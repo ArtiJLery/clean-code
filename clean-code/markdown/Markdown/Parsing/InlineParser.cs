@@ -21,8 +21,8 @@ namespace Markdown.Parsing
 		private IReadOnlyList<INode> ParseRange(RuleContext context, int start, int end)
 		{
 			var result = new List<INode>();
-			int pos = start;
-			int textStart = start;
+			var pos = start;
+			var textStart = start;
 
 			while(pos < end)
 			{	
@@ -63,23 +63,10 @@ namespace Markdown.Parsing
 		// Убираем маски экранирования из готового текста
 		private string Unmask(string text, int start, int end)
 		{
-			var sb = new StringBuilder(end - start);
-			int i = start;
-
-			while (i < end)
-			{
-				if (text[i] == Escaper.Mask && i + 1 < end)
-				{
-					sb.Append(text[i + 1]);
-					i += 2;
-				}
-				else
-				{
-					sb.Append(text[i]);
-					i++;
-				}
-			}
-			return sb.ToString();
+			if (end <= start) return string.Empty;
+			// Unmask работает с частью текста, для этого нужен Substring
+			return text.Substring(start, end - start)
+				.Replace(Escaper.Mask.ToString(), string.Empty);
 		}
 	}
 }

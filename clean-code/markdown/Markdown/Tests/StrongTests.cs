@@ -11,19 +11,25 @@ namespace Markdown.Tests
 		[Test]
 		public void SimpleStrong()
 		{
-			_md.Render("Выделенный __текст__").Should().Be("<p>Выделенный <strong>текст</strong></p>");
+			var rendered = _md.Render("Выделенный __текст__");
+			
+			rendered.Should().Be("<p>Выделенный <strong>текст</strong></p>");
 		}
 
 		[Test]
 		public void StrongContainsEm()
 		{
-			_md.Render("__с _разными_ символами__").Should().Be("<p><strong>с <em>разными</em> символами</strong></p>");
+			var rendered = _md.Render("__с _разными_ символами__");
+			
+			rendered.Should().Be("<p><strong>с <em>разными</em> символами</strong></p>");
 		}
 
 		[Test]
 		public void EmptyUnderscoresStay()
 		{
-			_md.Render("____").Should().Be("<p>____</p>");
+			var rendered = _md.Render("____");
+			
+			rendered.Should().Be("<p>____</p>");
 		}
 	}
 }

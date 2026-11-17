@@ -11,13 +11,17 @@ namespace Markdown.Tests
 		[Test]
 		public void Simple_Heading()
 		{
-			_md.Render("# Заголовок").Should().Be("<h1>Заголовок</h1>");
+			var rendered = _md.Render("# Заголовок");
+			
+			rendered.Should().Be("<h1>Заголовок</h1>");
 		}
 
 		[Test]
 		public void HeadingWithoutSpaceIsText()
 		{
-			_md.Render("#Заголовок").Should().Be("<p>#Заголовок</p>");
+			var rendered = _md.Render("#Заголовок");
+
+			rendered.Should().Be("<p>#Заголовок</p>");
 		}
 	}
 }
